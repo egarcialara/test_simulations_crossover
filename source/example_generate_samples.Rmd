@@ -1,6 +1,8 @@
 ---
 title: "Example 1"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Load functions
@@ -8,7 +10,7 @@ output: html_notebook
 source("evaluate_samples.R")
 source("generate_samples.R")
 library(ggplot2)
-library(tidyr)
+library(dplyr)
 ```
 
 # Example 1: parallel design
@@ -17,8 +19,8 @@ In the examples there are 2 groups: treatment y control
 n_total <- 10000
 n <- n_total/2
 # Groups
-group_1 <- rep(c(rep(TRUE, n), rep(FALSE, n)), 2)
-group_2 <- !group_AB
+group_1 <- c(rep(TRUE, n), rep(FALSE, n))
+group_2 <- !group_1
 ```
 
 
@@ -102,7 +104,7 @@ group_period2 <- !group_period1
 set.seed(123)
 # Generate data
 Y_2a <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75, # for 2x between var
   treatment_effect=0, period_effect=0
   )
 # Basic summary
@@ -132,7 +134,7 @@ ggplot(df_2a) +
 set.seed(123)
 # Generate data
 Y_2b <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
   treatment_effect=0.4, period_effect=0
   )
 # Basic summary
@@ -187,7 +189,7 @@ ggplot(df_2b) +
 set.seed(123)
 # Generate data
 Y_2c <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
   treatment_effect=0, period_effect=0.03
   )
 # Basic summary
@@ -243,7 +245,7 @@ ggplot(df_2c) +
 set.seed(123)
 # Generate data
 Y_2d <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
   treatment_effect=0.4, period_effect=0.03
   )
 # Basic summary
@@ -298,7 +300,7 @@ ggplot(df_2d) +
 set.seed(123)
 # Generate data
 Y_2e <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
   treatment_effect=0.4, period_effect=0.03,
   do.random = TRUE
   )
@@ -350,13 +352,13 @@ ggplot(df_2e) +
 
 # Save datasets
 ```{r}
-write.csv(Y_1a, "data/parallel.csv")
-write.csv(Y_1b, "data/parallel_treatment.csv")
-write.csv(Y_2a, "data/crossover.csv")
-write.csv(Y_2b, "data/crossover_treatment.csv")
-write.csv(Y_2c, "data/crossover_period.csv")
-write.csv(Y_2d, "data/crossover_treatment_period.csv")
-write.csv(Y_2e, "data/crossover_treatment_period_random.csv")
+write.csv(Y_1a, "../data/parallel.csv")
+write.csv(Y_1b, "../data/parallel_treatment.csv")
+write.csv(Y_2a, "../data/crossover.csv")
+write.csv(Y_2b, "../data/crossover_treatment.csv")
+write.csv(Y_2c, "../data/crossover_period.csv")
+write.csv(Y_2d, "../data/crossover_treatment_period.csv")
+write.csv(Y_2e, "../data/crossover_treatment_period_random.csv")
 ```
 
 

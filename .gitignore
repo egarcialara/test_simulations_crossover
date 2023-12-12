@@ -2,3 +2,4 @@
 *.Rhistory
 *.Rproj
 *.nb.html
+.Rproj.user
