@@ -12,7 +12,7 @@ library(tidyr)
 ```
 
 # Example 1: parallel design
-En los dos ejemplos, tendremos 2 grupos: treatment y control
+In the examples there are 2 groups: treatment y control
 ```{r}
 n_total <- 10000
 n <- n_total/2
@@ -102,7 +102,7 @@ group_period2 <- !group_period1
 set.seed(123)
 # Generate data
 Y_2a <- generate.samples.crossover(
-  n_total=n_total, b0=120, sigma_u=20,
+  n_total=n_total, b0=120, sigma_u=20, rho=0.75,
   treatment_effect=0, period_effect=0
   )
 # Basic summary

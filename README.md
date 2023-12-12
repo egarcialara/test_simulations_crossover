@@ -31,11 +31,13 @@ There, AB and BA are the groups, and P1 and P2 the 2 periods. A corresponds to c
 and B to treatment.
 
 $$
-Y_{ij} = b0 + g1_j\pi_j + g2_{ij}b_i + u_i
+Y_{ij} = b0 + g1_j\pi_j + g2_{ij}b_i + u_{ij}
 $$
 
 - j: period
 - $\pi$: period effect
+
+(with $u_{ij}$ unique per patient and period, with the values for one patient correlated.)
 
 
 ## References
