@@ -1,0 +1,147 @@
+---
+title: "Example power error"
+output: html_notebook
+---
+
+# Load functions
+```{r}
+source("evaluate_samples.R")
+source("generate_samples.R")
+library(ggplot2)
+library(tidyr)
+```
+
+# Parallel design
+
+```{r}
+n <- 40
+treatment_effect <- 0.4
+treatment_effect_null <- 0
+n_sim <- 1000
+```
+
+## Power
+```{r}
+set.seed(1234)
+list_t_values_2 <- c()
+list_p_values_2 <- c()
+
+for (i in c(1:n_sim)){
+  Y_draw2 <- generate.samples.parallel(
+    n_total=n, 
+    b0=120, sigma_u=20
+    treatment_effect=treatment_effect)
+  r2 <- t.test(
+    x=Y_draw2[1:20],
+    y=Y_draw2[21:40],
+    alternative=c("two.sided"), var.equal=TRUE)
+  list_t_values_2 <- append(list_t_values_2, r2$statistic)
+  list_p_values_2 <- append(list_p_values_2, r2$p.value)
+}
+
+# list_pvalues_2 <- 2 * pt(list_t_values_2, (n-2), lower.tail = TRUE)
+cat(paste(sum(list_p_values_2 < 0.05) / n_sim * 100), "%")
+p2 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_2), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p2
+```
+
+## Type I error
+And with null treatment effect
+```{r}
+set.seed(1234)
+list_t_values_3 <- c()
+list_p_values_3 <- c()
+for (i in c(1:n_sim)){
+  Y_draw3 <- generate.samples.parallel(
+    n_total=n,
+    b0=120, sigma_u=20,
+    treatment_effect=treatment_effect_null)
+  r3 <- t.test(
+    x=Y_draw3[1:20],
+    y=Y_draw3[21:40],
+    alternative=c("two.sided"), var.equal=TRUE)
+  list_t_values_3 <- append(list_t_values_3, r3$statistic)
+  list_p_values_3 <- append(list_p_values_3, r3$p.value)
+}
+
+# list_pvalues_3 <- 2 * pt(list_t_values_3, (n-2), lower.tail = TRUE)
+cat(paste(sum(list_p_values_3 < 0.05) / n_sim * 100), "%")
+p3 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_3), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p3
+```
+
+
+
+
+
+# Crossover
+```{r}
+n <- 40
+treatment_effect <- 0.4
+treatment_effect_null <- 0
+period_effect <- 0.03
+n_sim <- 1000
+```
+
+## Power
+```{r}
+set.seed(1234)
+list_t_values_5 <- c()
+list_p_values_5 <- c()
+for (i in c(1:n_sim)){
+  Y_draw5 <- generate.samples.crossover(
+    n_total=n, 
+    b0=120, sigma_u=20, rho=0.5,
+    treatment_effect=treatment_effect,
+    period_effect=period_effect)
+  
+  r5 <- t.test(
+    x=c(Y_draw5[1:10], Y_draw5[31:40]),
+    y=Y_draw5[11:30],
+    alternative=c("two.sided"), var.equal=FALSE, paired=TRUE)
+  list_t_values_5 <- append(list_t_values_5, r5$statistic)
+  list_p_values_5 <- append(list_p_values_5, r5$p.value)
+}
+
+# list_pvalues_5 <- 2 * pt(list_t_values_5, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_5 < 0.05) / n_sim * 100)
+p5 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_5), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p5
+```
+
+## Type I error
+```{r}
+set.seed(1234)
+list_t_values_6 <- c()
+list_p_values_6 <- c()
+
+for (i in c(1:n_sim)){
+  Y_draw6 <- generate.samples.crossover(
+    n_total=n, 
+    b0=120, sigma_u=20, rho=0.5,
+    treatment_effect=treatment_effect_null,
+    period_effect=period_effect)
+  
+  r6 <- t.test(
+    x=c(Y_draw6[1:10], Y_draw6[31:40]),
+    y=Y_draw6[11:30],
+    alternative=c("two.sided"), var.equal=FALSE, paired=TRUE)
+  
+  list_t_values_6 <- append(list_t_values_6, r6$statistic)
+  list_p_values_6 <- append(list_p_values_6, r6$p.value)
+}
+
+# list_pvalues_6 <- 2 * pt(list_t_values_6, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_6 < 0.05) / n_sim * 100)
+p6 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_6), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p6
+```
+
