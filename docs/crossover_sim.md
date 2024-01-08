@@ -21,16 +21,20 @@ $$
 Option A: compound symmetry
 
 $$
-e_i = (e_{i1}, e_{i2}) \\
-e_i \sim \mathcal{N}(0, \Sigma_i) \\
+\displaylines{
+e_i = (e_{i1}, e_{i2})\\
+e_i \sim \mathcal{N}(0, \Sigma_i)\\
 \Sigma_i = \begin{bmatrix}
 1 & \rho \\
 \rho & 1
 \end{bmatrix} * \sigma^2
+}
 $$
 
 Also (for me)
+
 $$
+\displaylines{
 e_{ij} = u_i + w_{ij} \\
 u_i \sim\mathcal{N}(0, \sigma_u) \\
 w_{ij} \sim\mathcal{N}(0, \sigma_w) \\
@@ -43,6 +47,7 @@ w_{ij} \sim\mathcal{N}(0, \sigma_w) \\
 \sigma_u^2 + \sigma_w^2 & \sigma_u^2 \\
 \sigma_u^2 & \sigma_u^2 + \sigma_w^2
 \end{bmatrix}
+}
 $$
 
 - $u_{i}$: patient effect 
