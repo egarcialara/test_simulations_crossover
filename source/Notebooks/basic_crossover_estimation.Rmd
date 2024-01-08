@@ -1,0 +1,90 @@
+---
+title: "Basic crossover estimation"
+output: html_notebook
+---
+
+```{r echo=FALSE, warning=FALSE}
+library(nlme)
+library(tidyverse)
+```
+
+# Create the dataset
+Adapt from the one created in example_generate_samples_crossover.Rmd
+
+Find the indeces for the next 2 cases
+```{r}
+# Create the indeces: same length arrays, with TRUE only in the samples that belong to 
+# the specific sequence/period combination
+# Sequence in arrays: AB_P1, AB_P2, BA_P1, BA_P2
+n_total <- 10000
+n <- n_total/4
+index_AB_P1 <- c(rep(TRUE, n), rep(FALSE, 3*n))
+index_AB_P2 <- c(rep(FALSE, n), rep(TRUE, n), rep(FALSE, 2*n))
+index_BA_P1 <- c(rep(FALSE, 2*n), rep(TRUE, n), rep(FALSE, n))
+index_BA_P2 <- c(rep(FALSE, 3*n), rep(TRUE, n))
+index_AB <- c(index_AB_P1 | index_AB_P2)
+index_BA <- !index_AB
+index_treatment <- c(index_AB_P2 | index_BA_P1)
+index_control <- !index_treatment
+index_period1 <- c(index_AB_P1 | index_BA_P1)
+index_period2 <- !index_period1
+```
+
+```{r}
+# Standard dataset
+df_3a <- read.csv("../../data/crossover_treatment_period.csv",
+                  col.names=c("index", "value"))
+n_total <- nrow(df_3a)
+n <- n_total/4
+df_3a <- as_tibble(df_3a) %>%
+  
+  mutate(
+    Patient = c(rep(seq(1,n), 2), rep(seq(n+1,2*n), 2)),
+    Sequence=if_else(index_AB, "AB", "BA"),
+    Treatment=if_else(index_treatment, "Treatment", "Control"),
+    Period=if_else(index_period1, "P1", "P2"),
+    Combination = c(rep("AB_P1", n), rep("AB_P2", n),
+                    rep("BA_P1", n), rep("BA_P2", n))
+  )
+head(df_3a, 3)
+```
+
+# Mixed model
+```{r}
+# Standard
+m3a <- lm(value ~ 1 + Patient + Sequence + Period + Treatment, data=df_3a)
+summary(m3a)
+aov.3a<- anova(m3a)
+
+# A sort of carryover test?
+m3b <- lm(Treatment_diff ~ Patient + Sequence, data=df_3b)
+summary(m3b)
+anova(m3b)
+```
+
+# Standard t-test
+```{r}
+# Dataset with differences
+df_3b <- df_3a %>%
+  select(-index, -Combination) %>% 
+  pivot_wider(
+    # id_cols=Patient,
+    values_from=c(value, value),
+    names_from=c(Period, Treatment)
+  ) %>%
+  mutate(
+    P1 = coalesce(P1_Control, P1_Treatment),
+    P2 = coalesce(P2_Control, P2_Treatment),
+    Control = coalesce(P1_Control, P2_Control),
+    Treatment= coalesce(P1_Treatment, P2_Treatment),
+    
+    Period_diff = P2-P1,
+    Treatment_diff = Treatment - Control
+  )
+head(df_3b, 3)
+```
+
+
+
+
+

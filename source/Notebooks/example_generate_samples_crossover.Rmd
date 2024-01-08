@@ -1,0 +1,238 @@
+---
+title: "Example 2"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Load functions
+```{r echo=FALSE, warning=FALSE}
+source("../R/evaluate_samples.R")
+source("../R/generate_samples.R")
+library(ggplot2)
+library(dplyr)
+```
+
+# Example 2: crossover design
+
+Find the indeces for the next 2 cases
+```{r}
+# Create the indeces: same length arrays, with TRUE only in the samples that belong to 
+# the specific sequence/period combination
+# Sequence in arrays: AB_P1, AB_P2, BA_P1, BA_P2
+n_total <- 10000
+n <- n_total/4
+index_AB_P1 <- c(rep(TRUE, n), rep(FALSE, 3*n))
+index_AB_P2 <- c(rep(FALSE, n), rep(TRUE, n), rep(FALSE, 2*n))
+index_BA_P1 <- c(rep(FALSE, 2*n), rep(TRUE, n), rep(FALSE, n))
+index_BA_P2 <- c(rep(FALSE, 3*n), rep(TRUE, n))
+index_AB <- c(index_AB_P1 | index_AB_P2)
+index_BA <- !index_AB
+index_treatment <- c(index_AB_P2 | index_BA_P1)
+index_control <- !index_treatment
+index_period1 <- c(index_AB_P1 | index_BA_P1)
+index_period2 <- !index_period1
+```
+
+## 2.A No treatment or period effects
+```{r}
+set.seed(123)
+# Generate data
+Y_2a <- generate.samples.crossover(
+  n_total=n_total, b0=120, sigma_T=20, rho=0.667, # for 2x between var
+  treatment_effect=0, period_effect=0
+  )
+# Basic summary
+mean_2a <- mean(Y_2a)
+mean_AB <- mean(Y_2a[index_AB])
+mean_BA <- mean(Y_2a[index_BA])
+sd_2a <- sd(Y_2a)
+sd_AB <- sd(Y_2a[index_AB])
+sd_BA <- sd(Y_2a[index_BA])
+sd_within <- sqrt(get.var.within.crossover(Y_2a))
+cat(mean_2a, mean_AB, mean_BA)
+cat(sd_2a, sd_AB, sd_BA, sd_within)
+# Plot
+df_2a <- data.frame(
+  values=Y_2a, group_vector=index_AB) %>%
+  mutate(sequence=if_else(index_AB, "AB", "BA"))
+ggplot(df_2a) +
+  geom_density(aes(x=values, fill=sequence), alpha=0.4) +
+  theme_classic()
+```
+
+
+
+## 2.B Only treatment effects
+
+```{r}
+set.seed(123)
+# Generate data
+Y_2b <- generate.samples.crossover(
+  n_total=n_total, b0=120, sigma_T=20, rho=0.667,
+  treatment_effect=0.4, period_effect=0
+  )
+# Basic summary
+# Means
+mean_2b <- mean(Y_2b)
+mean_AB <- mean(Y_2b[index_AB])
+mean_BA <- mean(Y_2b[index_BA])
+mean_treatment <- mean(Y_2b[index_treatment])
+mean_control <- mean(Y_2b[index_control])
+mean_P1 <- mean(Y_2b[index_period1])
+mean_P2 <- mean(Y_2b[index_period2])
+# Sds
+sd_2b <- sd(Y_2b)
+sd_AB <- sd(Y_2b[index_AB])
+sd_BA <- sd(Y_2b[index_BA])
+sd_treatment <- sd(Y_2b[index_treatment])
+sd_control <- sd(Y_2b[index_control])
+sd_P1 <- sd(Y_2b[index_period1])
+sd_P2 <- sd(Y_2b[index_period2])
+sd_within <- sqrt(get.var.within.crossover(Y_2b))
+# Print
+cat(mean_2b, mean_AB, mean_BA)
+cat(mean_treatment, mean_control, mean_P1, mean_P2)
+cat(sd_2b, sd_AB, sd_BA, sd_within)
+cat(sd_treatment, sd_control, sd_P1, sd_P2)
+# Plot group
+df_2b <- data.frame(values=Y_2b) %>%
+  mutate(sequence=if_else(index_AB, "AB", "BA"),
+         treatment=if_else(index_treatment, "Treatment", "Control"),
+         period=if_else(index_period1, "P1", "P2"),
+         eachfour=c(rep("AB_P1", n), rep("AB_P2", n),
+                    rep("BA_P1", n), rep("BA_P2", n))
+  )
+ggplot(df_2b) +
+  geom_density(aes(x=values, fill=sequence), alpha=0.4) +
+  theme_classic()
+ggplot(df_2b) +
+  geom_density(aes(x=values, fill=treatment), alpha=0.4) +
+  theme_classic()
+ggplot(df_2b) +
+  geom_density(aes(x=values, fill=period), alpha=0.4) +
+  theme_classic()
+ggplot(df_2b) +
+  geom_density(aes(x=values, fill=eachfour), alpha=0.4) +
+  theme_classic()
+```
+
+
+
+## 2.C Only period effects
+```{r}
+set.seed(123)
+# Generate data
+Y_2c <- generate.samples.crossover(
+  n_total=n_total, b0=120, sigma_T=20, rho=0.667,
+  treatment_effect=0, period_effect=0.03
+  )
+# Basic summary
+# Means
+mean_2c <- mean(Y_2c)
+mean_AB <- mean(Y_2c[index_AB])
+mean_BA <- mean(Y_2c[index_BA])
+mean_treatment <- mean(Y_2c[index_treatment])
+mean_control <- mean(Y_2c[index_control])
+mean_P1 <- mean(Y_2c[index_period1])
+mean_P2 <- mean(Y_2c[index_period2])
+# Sds
+sd_2c <- sd(Y_2c)
+sd_within <- sqrt(get.var.within.crossover(Y_2c))
+sd_AB <- sd(Y_2c[index_AB])
+sd_BA <- sd(Y_2c[index_BA])
+sd_treatment <- sd(Y_2c[index_treatment])
+sd_control <- sd(Y_2c[index_control])
+sd_P1 <- sd(Y_2c[index_period1])
+sd_P2 <- sd(Y_2c[index_period2])
+# Print
+cat(mean_2c, mean_AB, mean_BA)
+cat(mean_treatment, mean_control, mean_P1, mean_P2)
+cat(sd_2c, sd_AB, sd_BA, sd_within)
+cat(sd_treatment, sd_control, sd_P1, sd_P2)
+# Plot group
+df_2c <- data.frame(values=Y_2c) %>%
+  mutate(sequence=if_else(index_AB, "AB", "BA"),
+         treatment=if_else(index_treatment, "Treatment", "Control"),
+         period=if_else(index_period1, "P1", "P2"),
+         eachfour=c(rep("AB_P1", n), rep("AB_P2", n),
+                    rep("BA_P1", n), rep("BA_P2", n))
+  )
+ggplot(df_2c) +
+  geom_density(aes(x=values, fill=sequence), alpha=0.4) +
+  theme_classic()
+ggplot(df_2c) +
+  geom_density(aes(x=values, fill=treatment), alpha=0.4) +
+  theme_classic()
+ggplot(df_2c) +
+  geom_density(aes(x=values, fill=period), alpha=0.4) +
+  theme_classic()
+ggplot(df_2c) +
+  geom_density(aes(x=values, fill=eachfour), alpha=0.4) +
+  theme_classic()
+```
+
+
+
+
+## 2.D Yes treatment and period effects
+```{r}
+set.seed(123)
+# Generate data
+Y_2d <- generate.samples.crossover(
+  n_total=n_total, b0=120, sigma_T=20, rho=0.667,
+  treatment_effect=0.4, period_effect=0.03
+  )
+# Basic summary
+# Means
+mean_2d <- mean(Y_2d)
+mean_AB <- mean(Y_2d[index_AB])
+mean_BA <- mean(Y_2d[index_BA])
+mean_treatment <- mean(Y_2d[index_treatment])
+mean_control <- mean(Y_2d[index_control])
+mean_P1 <- mean(Y_2d[index_period1])
+mean_P2 <- mean(Y_2d[index_period2])
+# Sds
+sd_2d <- sd(Y_2d)
+sd_within <- sqrt(get.var.within.crossover(Y_2d))
+sd_AB <- sd(Y_2d[index_AB])
+sd_BA <- sd(Y_2d[index_BA])
+sd_treatment <- sd(Y_2d[index_treatment])
+sd_control <- sd(Y_2d[index_control])
+sd_P1 <- sd(Y_2d[index_period1])
+sd_P2 <- sd(Y_2d[index_period2])
+# Print
+cat(mean_2d, mean_AB, mean_BA)
+cat(mean_treatment, mean_control, mean_P1, mean_P2)
+cat(sd_2d, sd_AB, sd_BA, sd_within)
+cat(sd_treatment, sd_control, sd_P1, sd_P2)
+# Plot group
+df_2d <- data.frame(values=Y_2d) %>%
+  mutate(sequence=if_else(index_AB, "AB", "BA"),
+         treatment=if_else(index_treatment, "Treatment", "Control"),
+         period=if_else(index_period1, "P1", "P2"),
+         eachfour=c(rep("AB_P1", n), rep("AB_P2", n),
+                    rep("BA_P1", n), rep("BA_P2", n))
+  )
+ggplot(df_2d) +
+  geom_density(aes(x=values, fill=sequence), alpha=0.4) +
+  theme_classic()
+ggplot(df_2d) +
+  geom_density(aes(x=values, fill=treatment), alpha=0.4) +
+  theme_classic()
+ggplot(df_2d) +
+  geom_density(aes(x=values, fill=period), alpha=0.4) +
+  theme_classic()
+ggplot(df_2d) +
+  geom_density(aes(x=values, fill=eachfour), alpha=0.4) +
+  theme_classic()
+```
+
+
+# Save datasets
+```{r}
+write.csv(Y_2a, "../../data/crossover.csv")
+write.csv(Y_2b, "../../data/crossover_treatment.csv")
+write.csv(Y_2c, "../../data/crossover_period.csv")
+write.csv(Y_2d, "../../data/crossover_treatment_period.csv")
+```

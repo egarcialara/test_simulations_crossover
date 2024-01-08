@@ -1,0 +1,170 @@
+---
+title: "Example power error"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+# Load functions
+```{r echo=FALSE, warning=FALSE}
+source("../R/evaluate_samples.R")
+source("../R/generate_samples.R")
+library(ggplot2)
+library(tidyverse)
+
+```
+
+
+# Crossover
+```{r}
+n <- 40
+treatment_effect <- 0.4
+treatment_effect_null <- 0
+period_effect <- 0.03
+n_sim <- 1000
+```
+
+## Indeces
+```{r}
+# Create the indeces: same length arrays, with TRUE only in the samples that belong to 
+# the specific sequence/period combination
+# Sequence in arrays: AB_P1, AB_P2, BA_P1, BA_P2
+n_total <- 10000
+n <- n_total/4
+index_AB_P1 <- c(rep(TRUE, n), rep(FALSE, 3*n))
+index_AB_P2 <- c(rep(FALSE, n), rep(TRUE, n), rep(FALSE, 2*n))
+index_BA_P1 <- c(rep(FALSE, 2*n), rep(TRUE, n), rep(FALSE, n))
+index_BA_P2 <- c(rep(FALSE, 3*n), rep(TRUE, n))
+index_AB <- c(index_AB_P1 | index_AB_P2)
+index_BA <- !index_AB
+index_treatment <- c(index_AB_P2 | index_BA_P1)
+index_control <- !index_treatment
+index_period1 <- c(index_AB_P1 | index_BA_P1)
+index_period2 <- !index_period1
+```
+
+
+## Power
+```{r}
+set.seed(1234)
+list_t_values_5 <- c()
+list_p_values_5 <- c()
+for (i in c(1:n_sim)){
+  Y_draw5 <- generate.samples.crossover(
+    n_total=n_total, 
+    b0=120, sigma_T=20, rho=0.667,
+    treatment_effect=treatment_effect,
+    period_effect=period_effect)
+  
+  r5 <- t.test(
+    x=Y_draw5[index_treatment],
+    y=Y_draw5[index_control],
+    alternative=c("two.sided"), var.equal=FALSE, paired=TRUE)
+  list_t_values_5 <- append(list_t_values_5, r5$statistic)
+  list_p_values_5 <- append(list_p_values_5, r5$p.value)
+}
+
+# list_pvalues_5 <- 2 * pt(list_t_values_5, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_5 < 0.05) / n_sim * 100)
+p5 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_5), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p5
+```
+
+## Type I error
+```{r}
+set.seed(1234)
+list_t_values_6 <- c()
+list_p_values_6 <- c()
+
+for (i in c(1:n_sim)){
+  Y_draw6 <- generate.samples.crossover(
+    n_total=n_total, 
+    b0=120, sigma_T=20, rho=0.667,
+    treatment_effect=treatment_effect_null,
+    period_effect=period_effect)
+  
+  r6 <- t.test(
+    x=Y_draw6[index_treatment],
+    y=Y_draw6[index_control],
+    alternative=c("two.sided"), var.equal=FALSE, paired=TRUE)
+  
+  list_t_values_6 <- append(list_t_values_6, r6$statistic)
+  list_p_values_6 <- append(list_p_values_6, r6$p.value)
+}
+
+# list_pvalues_6 <- 2 * pt(list_t_values_6, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_6 < 0.05) / n_sim * 100)
+p6 <- ggplot() +
+  geom_histogram(aes(x=list_p_values_6), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p6
+```
+
+
+# Repeat, using lm
+## Power
+```{r}
+set.seed(1234)
+list_t_values_7a <- c()
+list_p_values_7a <- c()
+for (i in c(1:n_sim)){
+  Y_7a <- generate.samples.crossover(
+    n_total=n_total, 
+    b0=120, sigma_T=20, rho=0.667,
+    treatment_effect=treatment_effect,
+    period_effect=period_effect)
+  df_7a <- data.frame(values=Y_7a) %>%
+  mutate(Patient=c(rep(seq(1, n), 2), rep(seq(n+1, 2*n), 2)),
+         Sequence=if_else(index_AB, "AB", "BA"),
+         Treatment=if_else(index_treatment, "Treatment", "Control"),
+         Period=if_else(index_period1, "P1", "P2")
+  )
+  
+  m7a <- lm(values ~ 1 + Patient + Sequence + Period + Treatment, data=df_7a)
+  aov.7a <- anova(m7a)
+  list_p_values_7a <- append(list_p_values_7a, aov.7a$`Pr(>F)`[4])
+}
+
+# list_pvalues_5 <- 2 * pt(list_t_values_5, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_7a < 0.05) / n_sim * 100)
+p7a <- ggplot() +
+  geom_histogram(aes(x=list_p_values_7a), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p7a
+```
+
+## Type I error
+```{r}
+set.seed(1234)
+list_t_values_7b <- c()
+list_p_values_7b <- c()
+
+for (i in c(1:n_sim)){
+  Y_7b <- generate.samples.crossover(
+    n_total=n_total, 
+    b0=120, sigma_T=20, rho=0.667,
+    treatment_effect=treatment_effect_null,
+    period_effect=period_effect)
+  df_7b <- data.frame(values=Y_7b) %>%
+  mutate(Patient=c(rep(seq(1, n), 2), rep(seq(n+1, 2*n), 2)),
+         Sequence=if_else(index_AB, "AB", "BA"),
+         Treatment=if_else(index_treatment, "Treatment", "Control"),
+         Period=if_else(index_period1, "P1", "P2")
+  )
+  
+  m7b <- lm(values ~ 1 + Patient + Sequence + Period + Treatment, data=df_7b)
+  aov.7b <- anova(m7b)
+  list_p_values_7b <- append(list_p_values_7b, aov.7b$`Pr(>F)`[4])
+}
+
+# list_pvalues_6 <- 2 * pt(list_t_values_6, (n-2), lower.tail = FALSE)
+cat(sum(list_p_values_7b < 0.05) / n_sim * 100)
+p7b <- ggplot() +
+  geom_histogram(aes(x=list_p_values_7b), bins=30) +
+  geom_vline(xintercept=0.05, color="red")
+p7b
+```
+

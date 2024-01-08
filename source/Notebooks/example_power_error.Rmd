@@ -29,7 +29,7 @@ list_p_values_2 <- c()
 for (i in c(1:n_sim)){
   Y_draw2 <- generate.samples.parallel(
     n_total=n, 
-    b0=120, sigma_u=20
+    b0=120, sigma_u=20,
     treatment_effect=treatment_effect)
   r2 <- t.test(
     x=Y_draw2[1:20],
